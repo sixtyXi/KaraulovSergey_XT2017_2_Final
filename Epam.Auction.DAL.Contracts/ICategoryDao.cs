@@ -1,9 +1,6 @@
-﻿using Epam.Auction.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Epam.Auction.Entities;
 
 namespace Epam.Auction.DAL.Contracts
 {

@@ -1,22 +1,19 @@
-﻿using Epam.Auction.DAL.Contracts;
-using Epam.Auction.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Epam.Auction.DAL.Contracts;
+using Epam.Auction.Entities;
 
 namespace Epam.Auction.DAL.DataBase
 {
     public class CategoriesLotsDao : ICategoriesLotsDao
     {
-        private string connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
+        readonly string connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 
         public bool Create(Guid categoryId, Guid lotId)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(this.connectionString))
             {
                 SqlCommand command = new SqlCommand();
                 command.Connection = connection;
@@ -30,7 +27,7 @@ namespace Epam.Auction.DAL.DataBase
 
         public bool Delete(Guid lotId)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(this.connectionString))
             {
                 SqlCommand command = new SqlCommand();
                 command.Connection = connection;
@@ -50,7 +47,7 @@ namespace Epam.Auction.DAL.DataBase
 
         public IEnumerable<Lot> GetLotsByCategory(Guid categoryId)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(this.connectionString))
             {
                 SqlCommand command = new SqlCommand();
                 command.Connection = connection;

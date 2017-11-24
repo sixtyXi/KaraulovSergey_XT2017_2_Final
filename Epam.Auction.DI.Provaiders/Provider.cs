@@ -29,18 +29,31 @@ namespace Epam.Auction.DI.Providers
         }
 
         public static ILotDao LotDao { get; }
+
         public static ILotLogic LotLogic { get; }
+
         public static ICategoryDao CategoryDao { get; }
+
         public static ICategoryLogic CategoryLogic { get; }
+
         public static ICategoriesLotsDao CategoriesLotsDao { get; }
+
         public static ICategoriesLotsLogic CategoriesLotsLogic { get; }
+
         public static IUserDao UserDao { get; }
+
         public static IUserLogic UserLogic { get; }
+
         public static ILotsCostsDao LotsCostsDao { get; }
+
         public static ILotsCostsLogic LotsCostsLogic { get; }
+
         public static ILotsUsersDao LotsUsersDao { get; }
+
         public static ILotsUsersLogic LotsUsersLogic { get; }
+
         public static IUsersRolesDao UsersRolesDao { get; }
+
         public static IUsersRolesLogic UsersRolesLogic { get; }
     }
 }

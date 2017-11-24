@@ -1,0 +1,334 @@
+﻿@using Epam.Auction.PL.WebUI.Helpers
+@using Epam.Auction.Entities
+@{
+    Layout = "~/_LayoutCabinet.cshtml";
+    Page.Title = "Администрирование";
+    if (!User.IsInRole("Admin"))
+    {
+        Response.Redirect("~/");
+    }
+    if (IsAjax)
+    {
+        Layout = null;
+        if (!string.IsNullOrWhiteSpace(Request["idLot"]))
+        {
+            try
+            {
+                Guid idLot = Guid.Parse(Request["idLot"]);
+                if (Providers.categoriesLotsLogic.Delete(idLot))
+                {
+                    Providers.lotsCostsLogic.Delete(idLot);
+                    Providers.lotsUsersLogic.Delete(idLot);
+                    Providers.lotLogic.Delete(idLot);
+                    return;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(Request["newCategory"]))
+        {
+            try
+            {
+                if (Providers.categoryLogic.Add(Request["newCategory"]))
+                {
+                    return;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            catch (Exception)
+            {
+
+                Response.SetStatus(HttpStatusCode.NotFound);
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(Request["roleToDelete"]) && !string.IsNullOrWhiteSpace(Request["userName"]))
+        {
+            try
+            {
+                if (Providers.usersRolesLogic.Delete(Request["userName"], Request["roleToDelete"]))
+                {
+                    return;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            catch (Exception)
+            {
+
+                Response.SetStatus(HttpStatusCode.NotFound);
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(Request["roleToAdd"]) && !string.IsNullOrWhiteSpace(Request["userName"]))
+        {
+            try
+            {
+                if (Providers.usersRolesLogic.Add(Request["userName"], Request["roleToAdd"]))
+                {
+                    return;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            catch (Exception)
+            {
+
+                Response.SetStatus(HttpStatusCode.NotFound);
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(Request["action"]))
+        {
+            var action = Request["action"];
+            try
+            {
+                switch (action)
+                {
+                    case "user":
+                        var users = Providers.userLogic.GetAllUsers();
+                        <div class="row">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Имя</th>
+                                        <th scope="col">Убрать права</th>
+                                        <th scope="col">Добавить права</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{  int counter = 1;
+                                        foreach (var user in users)
+                                        {
+                                            <tr>
+                                                <th scope="row">@(counter++)</th>
+                                                <td>@user.Name</td>
+                                                <td>
+                                                    @{
+                                                        <form action="adminPage.cshtml" class="del-role-form" data-userName=@user.Name>
+                                                            @{
+                                                                string[] roles;
+                                                                try
+                                                                {
+                                                                    roles = Providers.usersRolesLogic.GetRolesForUser(user.Name);
+
+                                                                    <select class="custom-select" name="roleToDelete">
+                                                                        <option selected disabled>Убрать права</option>
+                                                                        @{
+                                                                            foreach (var role in roles)
+                                                                            {
+                                                                                <option value=@role>@role</option>
+                                                                            }
+                                                                        }
+                                                                    </select>
+                                                                    <button type="submit" class="btn btn-outline-dark btn-sm">OK</button>
+                                                                }
+                                                                catch (InvalidOperationException)
+                                                                {
+                                                                    <span>Нет прав</span>
+                                                                }
+                                                            }
+                                                        </form>
+
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        string[] availableRoles;
+                                                        try
+                                                        {
+                                                            availableRoles = Providers.usersRolesLogic.GetAvailableRolesForUser(user.Name);
+                                                            if (availableRoles.Length == 0)
+                                                            {
+                                                                throw new InvalidOperationException();
+                                                            }
+                                                            <form action="adminPage.cshtml" class="add-role-form" data-userName=@user.Name>
+                                                                <select class="custom-select" name="roleToAdd">
+                                                                    <option selected disabled>Дать права</option>
+                                                                    @{
+                                                                        foreach (var role in availableRoles)
+                                                                        {
+                                                                            <option value=@role>@role</option>
+                                                                        }
+                                                                    }
+                                                                </select>
+                                                                <button type="submit" class="btn btn-outline-dark btn-sm">OK</button>
+                                                            </form>
+                                                        }
+                                                        catch (InvalidOperationException)
+                                                        {
+                                                            <span>Все права</span>
+                                                        }
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    } 
+                                </tbody>
+                            </table>
+                        </div>
+                        break;
+                    case "category":
+                        <div class="row">
+                            <div class="col-12">
+                                <form action="adminPage.cshtml" id="category-form">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Введите название" name="newCategory">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-outline-dark btn-sm" type="submit">Добавить категорию</button>
+                                        </span>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        break;
+                    case "lot":
+
+                        break;
+                    default:
+                        break;
+                }
+                
+                }
+                catch (Exception)
+                {
+
+                    Response.SetStatus(HttpStatusCode.NotFound);
+                }
+            }
+            IEnumerable<Lot> lots = null;
+            ////Поиск лота в категории
+            if (!string.IsNullOrWhiteSpace(Request["Category"]) && !string.IsNullOrWhiteSpace(Request["LotName"]))
+            {
+                try
+                {
+                    lots = Providers.categoriesLotsLogic.GetLotsByCategory(Guid.Parse(Request["Category"]), Request["LotName"]);
+                    if (lots.Count() == 0)
+                    {
+                        throw new ArgumentException();
+                    }
+                }
+                catch (Exception)
+                {
+
+                    Response.SetStatus(HttpStatusCode.NotFound);
+                    return;
+                }
+            }
+            ////Показать все лоты в категории
+            else if (!string.IsNullOrWhiteSpace(Request["Category"]) && string.IsNullOrWhiteSpace(Request["LotName"]))
+            {
+                try
+                {
+                    lots = Providers.categoriesLotsLogic.GetLotsByCategory(Guid.Parse(Request["Category"]));
+                }
+                catch (Exception)
+                {
+
+                    Response.SetStatus(HttpStatusCode.NotFound);
+                    return;
+                }
+            }
+            ////Поиск лота по названию во всех категориях
+            else if (string.IsNullOrWhiteSpace(Request["Category"]) && !string.IsNullOrWhiteSpace(Request["LotName"]))
+            {
+                try
+                {
+                    lots = Providers.lotLogic.GetLotsByName(Request["LotName"]);
+                    if (lots.Count() == 0)
+                    {
+                        throw new ArgumentException();
+                    }
+                }
+                catch (Exception)
+                {
+
+                    Response.SetStatus(HttpStatusCode.NotFound);
+                    return;
+                }
+            }
+
+            if (lots != null)
+            {
+                <div class="row">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Изображение</th>
+                                <th scope="col">Название</th>
+                                <th scope="col">Описание</th>
+                                <th scope="col">Окончание торгов</th>
+                                <th scope="col">Удалить лот</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int counter = 1;
+                                foreach (var item in lots)
+                                {
+                                    <tr>
+                                        <th scope="row">@(counter++)</th>
+                                        <td>
+                                            <a href="~/Pages/lot.cshtml?id=@item.Id">
+                                                <img src="data:image;base64,@System.Convert.ToBase64String(item.Image)" class="figure-img img-fluid rounded" alt=@item.Name>
+                                            </a>
+                                        </td>
+                                        <td>@item.Name</td>
+                                        <td>@item.Desc</td>
+                                        <td>@item.ExpireDate</td>
+                                        <td><a href="~/Pages/User/adminPage.cshtml?idLot=@item.Id" class="btn btn-outline-dark btn-sm btn-delete-lot">Удалить лот</a></td>
+                                    </tr>
+
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <script src="~/Scripts/ajaxAdminUsers.js"></script>
+                return;
+    }
+    var categories = Providers.categoryLogic.GetAll();
+}
+
+<div class="row">
+    <div class="col-12 col-sm-4">
+        <div class="list-group mb-2" id="ajax-list-adminPage" role="tablist">
+            <a href="~/Pages/User/adminPage.cshtml?action=user" class="list-group-item list-group-item-action" id="userAction" data-toggle="list">Модерация пользователей</a>
+            <a href="~/Pages/User/adminPage.cshtml?action=category" class="list-group-item list-group-item-action" data-toggle="list">Добавить категорию</a>
+            <a href="#" id="btn-toggle-search" class="list-group-item list-group-item-action" data-toggle="list">Модерация списка лотов</a>
+            <form action="~/Pages/User/adminPage.cshtml" class="list-group-item list-group-item-action hide" id="admin-search-panel">
+                <input class="form-control my-2 mr-sm-2" type="search" name="LotName" placeholder="Название лота">
+                <select class="form-control my-2 mr-sm-2" name="Category">
+                    <option value="" selected disabled>Искать в категориях</option>
+                    @{
+                        foreach (var item in categories)
+                        {
+                            <option value=@item.Id>@item.Name</option>
+                        }
+                    }
+
+                </select>
+                <button class="btn btn-outline-primary my-2 mx-auto mx-sm-0" type="submit">Найти</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-12 col-sm-8" id="lotsWrapAdmin"></div>
+</div>
+@section scripts{
+    <script src="~/Scripts/adminPage.js"></script>
+}

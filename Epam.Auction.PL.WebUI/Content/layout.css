@@ -1,0 +1,24 @@
+.container {
+    background-color: #e3f2fd;
+    /*background-color: red;*/
+}
+
+.btn{
+    cursor: pointer;
+}
+
+a~.figure-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+/*Добавление лота*/
+.img-preview {
+    max-width: 250px;
+    margin-top: 10%;
+}
+
+

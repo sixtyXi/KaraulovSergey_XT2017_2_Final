@@ -1,0 +1,104 @@
+﻿@using Epam.Auction.PL.WebUI.Helpers
+@using Epam.Auction.Entities
+@{
+    if (IsAjax)
+    {
+        if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+        {
+            ////сделать ставку
+            if (!string.IsNullOrWhiteSpace(Request["lotId"]) && !string.IsNullOrWhiteSpace(Request["newCost"]))
+            {
+                var userId = (Guid)Session["Id"];
+                var lotId = Guid.Parse(Request["lotId"]);
+                var newCost = decimal.Parse(Request["newCost"]);
+                try
+                {
+                    if (!(Providers.lotsCostsLogic.Update(lotId, newCost) && Providers.lotsUsersLogic.Update(lotId, userId)))
+                    {
+                        Response.SetStatus(HttpStatusCode.BadRequest);
+                    }
+                }
+                catch (Exception)
+                {
+
+                    Response.SetStatus(HttpStatusCode.BadRequest);
+                }
+
+                return;
+            }
+        }
+        else
+        {
+            Response.SetStatus(HttpStatusCode.BadRequest);
+        }
+    }
+    Page.Title = "Лот";
+    if (!string.IsNullOrWhiteSpace(Request.Params["id"]))
+    {
+        try
+        {
+            var lot = Providers.lotLogic.Get(Guid.Parse(Request.Params["id"]));
+            var cost = Providers.lotsCostsLogic.GetCost(lot.Id);
+            var minValue = cost + 1;
+            <div class="row">
+                <div class="col-12 col-sm-6 text-center">
+                    <figure class="figure">
+                        <img src="data:image;base64,@System.Convert.ToBase64String(lot.Image)" class="figure-img img-fluid rounded" alt=@lot.Name>
+                        <figcaption class="figure-caption text-primary">@lot.Name</figcaption>
+                    </figure>
+                </div>
+                <div class="col-12 col-sm-6 text-center text-sm-left">
+                    <div class="row">
+                        <div class="col-12 col-sm-4 text-primary">
+                            <span class="title">Описание лота</span>
+                        </div>
+                        <div class="col-12 col-sm-8">
+                            <span> @lot.Desc</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-sm-4 text-primary">
+                            <span class="title">Окончание торгов:</span>
+                        </div>
+                        <div class="col-12 col-sm-8">
+                          <span>@lot.ExpireDate</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-sm-4 text-primary">
+                            <span class="title">Цена лота:</span>
+                        </div>
+                        <div class="col-12 col-sm-8">
+                            <span>@cost</span>
+                        </div>
+                    </div>
+                    <form action="~/Pages/lot.cshtml?lotId=@lot.Id" class="row justify-content-center justify-content-sm-start" id="ajax-lot-form">
+                        <div class="col-12">
+                            <label for="currentCost">Ваша ставка:</label>
+                        </div>
+                        <div class="form-group col-8 col-sm-8 col-md-6">
+                            <input type="number" class="form-control" id="currentCost" name="newCost" min=@minValue placeholder="Введите цену">
+                        </div>
+                        <div class="col-12 col-sm-12">
+                            <button type="submit" class="btn btn-outline-primary">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+        catch (Exception)
+        {
+
+            Response.SetStatus(HttpStatusCode.NotFound);
+            return;
+        }
+    }
+
+    else
+    {
+        Response.Redirect("~/Default.cshtml");
+    }
+}
+@section scripts{
+    <script src="~/Scripts/lot.js"></script>
+}

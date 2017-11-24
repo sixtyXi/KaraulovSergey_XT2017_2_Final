@@ -1,0 +1,172 @@
+﻿@using Epam.Auction.PL.WebUI.Helpers
+@using Epam.Auction.Entities
+
+@{
+    if (IsAjax)
+    {
+        Layout = null;
+        IEnumerable<Lot> lots = null;
+        ////Поиск лота в категории
+        if (!string.IsNullOrWhiteSpace(Request["Category"]) && !string.IsNullOrWhiteSpace(Request["LotName"]))
+        {
+            try
+            {
+
+                lots = Providers.categoriesLotsLogic.GetNewLotsByCategoryAndName(Guid.Parse(Request["Category"]), Request["LotName"]);
+
+                if (lots.Count() == 0)
+                {
+                    throw new ArgumentException();
+                }
+            }
+            catch (Exception)
+            {
+
+                Response.SetStatus(HttpStatusCode.NotFound);
+                return;
+            }
+        }
+        ////Показать все лоты в категории
+        else if (!string.IsNullOrWhiteSpace(Request["Category"]) && string.IsNullOrWhiteSpace(Request["LotName"]))
+        {
+            try
+            {
+                lots = Providers.categoriesLotsLogic.GetNewLotsByCategory(Guid.Parse(Request["Category"]));
+            }
+            catch (Exception)
+            {
+
+                Response.SetStatus(HttpStatusCode.NotFound);
+                return;
+            }
+        }
+        ////Поиск лота по названию во всех категориях
+        else if (string.IsNullOrWhiteSpace(Request["Category"]) && !string.IsNullOrWhiteSpace(Request["LotName"]))
+        {
+            try
+            {
+                lots = Providers.lotLogic.GetNewLotsByName(Request["LotName"]);
+                if (lots.Count() == 0)
+                {
+                    throw new ArgumentException();
+                }
+            }
+            catch (Exception)
+            {
+
+                Response.SetStatus(HttpStatusCode.NotFound);
+                return;
+            }
+        }
+
+        if (lots != null)
+        {
+            <div class="row">
+            @foreach (var item in lots)
+            {
+                <div class="col-6 col-sm-4 col-md-3">
+                    <figure class="figure">
+                        <a href="~/Pages/lot.cshtml?id=@item.Id">
+                            <img src="data:image;base64,@System.Convert.ToBase64String(item.Image)" class="figure-img img-fluid rounded" alt=@item.Name>
+                        </a>
+                        <figcaption class="figure-caption">@item.Name</figcaption>
+                    </figure>
+                </div>
+            }
+            </div>
+        }
+        return;
+        }
+    }
+@{ 
+    Page.Title = "Аукцион";
+    var categories = Providers.categoryLogic.GetAll();
+}
+@section scripts{
+    <script src="~/Scripts/defaultPage.js"></script>
+}
+
+<div>
+    <div class="row text-center">
+        <div class="col-12 col-sm-4 text-sm-left"><a href="~/Pages/placeLot.cshtml" id="ajax-placed-link">Разместить лот</a></div>
+
+        <form action="~/Default.cshtml" id="ajax-form" class="col-12 col-sm-8 form-inline justify-content-sm-start  justify-content-md-end">
+            <input class="form-control my-2 mr-sm-2" type="search" name="LotName" placeholder="Название лота">
+            <select class="form-control my-2 mr-sm-2" name="Category">
+                <option value="" selected>Искать во всех категориях</option>
+                @foreach (var item in categories)
+                {
+                    <option value=@item.Id>@item.Name</option>
+                }
+            </select>
+            <button class="btn btn-outline-primary my-2 mx-auto mx-sm-0" type="submit">Найти</button>
+        </form>
+
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-4">
+            <div class="list-group mb-2" id="ajax-list" role="tablist">
+                @foreach (var item in categories)
+                {
+                    <a href="~/Default.cshtml" class="list-group-item list-group-item-action" data-toggle="list" data-id="@item.Id">@item.Name</a>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-8" id="lotsWrap">
+            @{
+                int newIndex;
+                int oldIndex;
+                int index;
+                int lotToShow = 12;////количество выводимых лотов на странице
+
+                if (Request["index"] == null)
+                {
+                    index = 0;
+                }
+                else
+                {
+                    index = int.Parse(Request["index"]);
+                }
+                oldIndex = index - lotToShow;
+                newIndex = index + lotToShow;
+                try
+                {
+                    var lots = Providers.lotLogic.GetNewLots(index, lotToShow, out bool isEnd);
+                    <div class="row">
+                        @foreach (var item in lots)
+                {
+
+                            <div class="col-6 col-sm-4 col-md-3 ">
+                                <figure class="figure">
+                                    <a href="~/Pages/lot.cshtml?id=@item.Id">
+                                        <img src="data:image;base64,@System.Convert.ToBase64String(item.Image)" class="figure-img img-fluid rounded" alt=@item.Name>
+                                    </a>
+                                    <figcaption class="figure-caption">@item.Name</figcaption>
+                                </figure>
+                            </div>
+                        }
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <ul class="pagination pagination-sm justify-content-center">
+                                @if (oldIndex >= 0)
+                                {
+                                    <li class="page-item"><a class="page-link" href="~/Default.cshtml?index=@oldIndex">Предыдущая</a></li>
+                                }
+                                @if (!isEnd)
+                                {
+                                    <li class="page-item"><a class="page-link" href="~/Default.cshtml?index=@newIndex">Следующая</a></li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+            }
+        </div>
+    </div>
+</div>

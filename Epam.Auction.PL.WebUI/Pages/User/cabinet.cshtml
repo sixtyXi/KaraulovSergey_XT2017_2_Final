@@ -1,0 +1,97 @@
+﻿@using Epam.Auction.PL.WebUI.Helpers
+@using Epam.Auction.Entities
+@{
+    Layout = "~/_LayoutCabinet.cshtml";
+    Page.Title = "Личный кабинет";
+    if (Request["logout"] != null)
+    {
+        FormsAuthentication.SignOut();
+        Response.Redirect("~/");
+    }
+
+    if (IsAjax)
+    {
+        Layout = null;
+        if (string.IsNullOrWhiteSpace(Request["query"]))
+        {
+            Response.SetStatus(HttpStatusCode.NotFound);
+        }
+        else
+        {
+            var userId = (Guid)Session["Id"];
+            var query = Request["query"];
+            IEnumerable<Lot> lots = null;
+            IDictionary<Guid, decimal> lotsCost = null;
+            try
+            {
+                switch (query)
+                {
+                    case "placed":
+                        ////возвращает лоты юзера, по которым торги продолжаются
+                        lots = Providers.lotLogic.GetActiveLotsByUserIdTimeNow(userId);
+                        ////цены всех лотов, размещенных юзером
+                        lotsCost = Providers.lotsCostsLogic.GetPlacedLotsCost(userId);
+                        break;
+                    case "bought":
+                        ////возвращает выигранные лоты
+                        lots = Providers.lotsUsersLogic.GetBoughtLots(userId);
+                        ////все ставки юзера(в т.ч. ставки при размещении лота, если она не перебита)
+                        lotsCost = Providers.lotsCostsLogic.GetAllBets(userId);
+                        break;
+                    case "sold":
+                        ////возвращает проданные лоты
+                        lots = Providers.lotsUsersLogic.GetSoldLots(userId);
+                        ////цены лотов, размещенных юзером
+                        lotsCost = Providers.lotsCostsLogic.GetPlacedLotsCost(userId);
+                        break;
+                    default:
+                        break;
+                }
+
+                if (lots == null)
+                {
+                    throw new Exception();
+                }
+
+                <div class="row">
+                    @foreach (var item in lots)
+                    {
+                        if (lotsCost.TryGetValue(item.Id, out decimal cost))
+                        {
+                            <div class="col-6 col-sm-4 col-md-3">
+                                <figure class="figure">
+                                    <a href="~/Pages/lot.cshtml?id=@item.Id">
+                                        <img src="data:image;base64,@System.Convert.ToBase64String(item.Image)" class="figure-img img-fluid rounded" alt=@item.Name>
+                                    </a>
+                                    <figcaption class="figure-caption">@item.Name</figcaption>
+                                    <span>Цена: @cost</span>
+                                </figure>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+            catch (Exception)
+            {
+
+                Response.SetStatus(HttpStatusCode.NotFound);
+            }
+        }
+        return;
+    }
+}
+
+@section scripts{
+    <script src="~/Scripts/cabinet.js"></script>
+}
+
+<div class="row">
+    <div class="col-12 col-sm-4">
+        <div class="list-group mb-2" id="ajax-list-cabinet" role="tablist">
+            <a href="~/Pages/User/cabinet.cshtml?query=placed" class="list-group-item list-group-item-action" data-toggle="list">Размещенные лоты</a>
+            <a href="~/Pages/User/cabinet.cshtml?query=bought" class="list-group-item list-group-item-action" data-toggle="list">Купленные лоты</a>
+            <a href="~/Pages/User/cabinet.cshtml?query=sold" class="list-group-item list-group-item-action" data-toggle="list">Проданные лоты</a>
+        </div>
+    </div>
+    <div class="col-12 col-sm-8" id="lotsWrapCab"></div>
+</div>

@@ -1,0 +1,55 @@
+﻿@using Epam.Auction.PL.WebUI.Helpers
+@using Epam.Auction.Entities
+@{ 
+    if (IsAjax)
+    {
+        Layout = null;
+        ////Регистрация
+        if (!string.IsNullOrWhiteSpace(Request["newName"]) && !string.IsNullOrWhiteSpace(Request["newPassword"]))
+        {
+            if (Providers.userLogic.Add(Request["newName"], Request["newPassword"]) &&
+                Providers.usersRolesLogic.Add(Request["newName"], "User"))
+            {
+                bool remember = (Request["remember"] != null);
+                FormsAuthentication.SetAuthCookie(Request["newName"], remember);
+                Guid userId = Providers.userLogic.GetUser(Request["newName"]).Id;
+                Session["Id"] = userId;
+                return;
+            }
+            else
+            {
+                Response.SetStatus(HttpStatusCode.BadRequest);
+                return;
+            }
+        }
+        ////Аутентификация
+        else if (!string.IsNullOrWhiteSpace(Request["name"]) && !string.IsNullOrWhiteSpace(Request["password"]))
+        {
+            try
+            {
+                if (Providers.userLogic.IsUser(Request["name"], Request["password"]))
+                {
+                    bool remember = (Request["remember"] != null);
+                    FormsAuthentication.SetAuthCookie(Request["name"], remember);
+                    Guid userId = Providers.userLogic.GetUser(Request["name"]).Id;
+                    Session["Id"] = userId;
+                    return;
+                }
+                else
+                {
+                    Response.SetStatus(HttpStatusCode.BadRequest);
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+                Response.SetStatus(HttpStatusCode.BadRequest);
+                return;
+            }
+        }
+    }
+    else
+    {
+        Response.Redirect("~/");
+    }
+}

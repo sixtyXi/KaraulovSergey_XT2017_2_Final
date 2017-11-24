@@ -1,0 +1,60 @@
+﻿@{ 
+    string userName = "Гость";
+    if (User.Identity.IsAuthenticated)
+    {
+        userName = User.Identity.Name;
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>@Page.Title</title>
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/layout.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav class="row text-center">
+                <div class="col-12 col-sm-2 text-sm-left">
+                    <a class="navbar-brand mr-0" href="~/Default.cshtml">Аукцион</a>
+                </div>
+                <div class="col-12 col-sm-4 text-sm-right">
+                    <span class="navbar-text">@userName</span>
+                </div>
+                @if (!User.Identity.IsAuthenticated)
+                {
+                    <div class="col-12 col-sm-6 text-sm-right">
+                        <button class="btn btn-outline-primary my-2 mr-sm-2" id="Registration">Регистрация</button>
+                        <button class="btn btn-outline-primary my-2" id="Login">Войти</button>
+                    </div>
+                    @RenderPage("/Pages/User/Partials/_loginPartial.cshtml")
+                }
+                else
+                {
+                    <div class="col-12 col-sm-6 text-sm-right">
+                        <a href="~/Pages/User/cabinet.cshtml" class="btn btn-outline-primary my-2 mr-sm-2" id="Сabinet">Личный кабинет</a>
+                        <a href="~/Pages/User/cabinet.cshtml?logout=on" class="btn btn-outline-primary my-2" id="Logout">Выйти</a>
+                    </div>
+                }
+            </nav>
+        </header>
+        <main>
+            @RenderBody()
+        </main>
+        <footer>
+            <div class="row">
+                <div class="col-12 text-right">Copyright &#9400;</div>
+            </div>
+        </footer>
+        <script src="~/Scripts/jquery-3.2.1.min.js"></script>
+        <script src="~/Scripts/umd/popper.min.js"></script>
+        <script src="~/Scripts/bootstrap.min.js"></script>
+        <script src="~/Scripts/login.js"></script>
+        @RenderSection("scripts", false)
+    </div>
+</body>
+</html>

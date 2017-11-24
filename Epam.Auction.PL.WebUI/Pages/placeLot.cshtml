@@ -1,0 +1,108 @@
+﻿@using Epam.Auction.Entities
+@using Epam.Auction.PL.WebUI.Helpers
+@{
+    if (IsAjax)
+    {
+        if (User.Identity.IsAuthenticated)
+        {
+            return;
+        }
+
+        Response.SetStatus(HttpStatusCode.BadRequest);
+        return;
+    }
+
+    if (!User.Identity.IsAuthenticated)
+    {
+        Response.Redirect("~/Default.cshtml");
+    }
+    var categories = Providers.categoryLogic.GetAll();
+    if (IsPost)
+    {
+        if (!string.IsNullOrWhiteSpace(Request["Name"]) &&
+            !string.IsNullOrWhiteSpace(Request["Desc"]) &&
+            !string.IsNullOrWhiteSpace(Request["Cost"]) &&
+            decimal.TryParse(Request["Cost"], out decimal cost) &&
+            TimeSpan.TryParse(Request["Time"], out TimeSpan auctionTime) &&
+            Guid.TryParse(Request["Category"], out Guid categoryId))
+        {
+            var imgData = Request.Files["Image"];
+            if (imgData.ContentLength > 0)
+            {
+                var binary = new byte[imgData.ContentLength];
+                using (BinaryReader reader = new BinaryReader(imgData.InputStream))
+                {
+                    for (int i = 0; i < binary.Length; i++)
+                    {
+                        binary[i] = reader.ReadByte();
+                    }
+                }
+                var dateNow = DateTime.Now;
+                var expireDate = dateNow.Add(auctionTime);
+                var lotId = Guid.NewGuid();
+                var userId = (Guid)Session["Id"];
+
+                Lot newLot = new Lot()
+                {
+                    Id = lotId,
+                    Name = Request["Name"],
+                    Desc = Request["Desc"],
+                    Image = binary,
+                    UserId = userId,
+                    ExpireDate = expireDate
+                };
+                ////добавляем в БД
+                if (Providers.lotLogic.Add(newLot) && Providers.categoriesLotsLogic.Add(categoryId, lotId) &&
+                    Providers.lotsCostsLogic.Add(newLot.Id, cost) &&
+                    Providers.lotsUsersLogic.Add(newLot.Id, userId))
+                {
+                    Response.Redirect("~/Default.cshtml");
+                }
+            }
+        }
+    }
+    Page.Title = "Разместить лот";
+}
+
+<div class="row">
+    <div class="col-8 offset-2 offset-lg-0 col-lg-8 text-center">
+        <figure class="figure img-preview">
+            <img src="#" class="figure-img img-fluid rounded" alt="Изображение лота">
+            <figcaption class="figure-caption">Название лота</figcaption>
+        </figure>
+    </div>
+    <div class="col-8 offset-2 offset-lg-0 col-lg-4">
+        <form action="~/Pages/placeLot.cshtml" method="post" enctype="multipart/form-data">
+            <div class="form-group col-12 col-lg-10 text-center">
+                <label for="LotName">Название лота</label>
+                <input class="form-control" type="text" id="LotName" name="name">
+                <label for="LotDesc">Описание лота</label>
+                <textarea class="form-control" id="LotDesc" name="desc" rows="3"></textarea>
+                <label for="LotImage">Загрузить изображение</label>
+                <input type="file" class="form-control-file" id="LotImage" name="image" accept="image/*">
+                <label for="LotCost">Начальная цена</label>
+                <input type="number" class="form-control" id="LotCost" name="cost" placeholder="Ваша цена">
+                <label for="PlacedTime">Срок размещения</label>
+                <select class="form-control" id="PlacedTime" name="time">
+                    <option value="0:01">1 мин</option>
+                    <option value="1">1 день</option>
+                    <option value="3">3 дня</option>
+                    <option value="7">7 дней</option>
+                </select>
+                <label for="category">Категория</label>
+                <select class="form-control" id="Category" name="category">
+                    @foreach (var item in categories)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                </select>
+                <button class="btn btn-outline-primary my-2" type="submit">Разместить лот</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section scripts{
+    <script src="~/Scripts/placeLot.js"></script>
+}
